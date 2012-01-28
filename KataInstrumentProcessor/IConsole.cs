@@ -16,6 +16,6 @@ namespace KataInstrumentProcessor
     /// </summary>
     public interface IConsole
     {
-        WriteLine(string text);
+        void WriteLine(string text);
     }
 }

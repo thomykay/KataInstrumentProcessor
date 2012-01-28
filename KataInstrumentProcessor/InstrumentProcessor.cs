@@ -5,21 +5,31 @@ namespace KataInstrumentProcessor
 
     public class InstrumentProcessor : IInstrumentProcessor
     {
+        #region 
+
         private IInstrument instrument;
 
         private ITaskDispatcher taskDispatcher;
 
         private Queue<string> currentTasks = new Queue<string>();
 
-        public InstrumentProcessor(IInstrument instrument, ITaskDispatcher taskDispatcher)
+        private IConsole console;
+
+        #endregion
+
+        public InstrumentProcessor(IInstrument instrument, ITaskDispatcher taskDispatcher, IConsole console)
         {
             this.instrument = instrument;
             this.taskDispatcher = taskDispatcher;
+            this.console = console;
 
             this.instrument.Finished += (sender, args) =>
                 {
                     this.taskDispatcher.FinishedTask(currentTasks.Dequeue());
                 };
+
+            this.instrument.Error += (sender, args) =>
+                { this.console.WriteLine(currentTasks.Dequeue()); };
         }
 
         public void Process()

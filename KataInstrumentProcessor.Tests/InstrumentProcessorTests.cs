@@ -19,7 +19,7 @@
         {
             var instrument = new Mock<IInstrument>();
             var taskDispatcher = new Mock<ITaskDispatcher>();
-            var instrumentProcessor = new InstrumentProcessor(instrument.Object, taskDispatcher.Object);
+            var instrumentProcessor = new InstrumentProcessor(instrument.Object, taskDispatcher.Object, new Mock<IConsole>().Object);
             Assert.IsNotNull(instrumentProcessor);
         }
 
@@ -29,7 +29,7 @@
             ////Arrange
             var instrument = new Mock<IInstrument>();
             var taskDispatcher = new Mock<ITaskDispatcher>();
-            var instrumentProcessor = new InstrumentProcessor(instrument.Object, taskDispatcher.Object);
+            var instrumentProcessor = new InstrumentProcessor(instrument.Object, taskDispatcher.Object, new Mock<IConsole>().Object);
             var message = Guid.NewGuid().ToString();
             taskDispatcher.Setup(d => d.GetTask()).Returns(message);
 
@@ -47,7 +47,7 @@
             ////Arrange
             var instrument = new Mock<IInstrument>();
             var taskDispatcher = new Mock<ITaskDispatcher>();
-            var instrumentProcessor = new InstrumentProcessor(instrument.Object, taskDispatcher.Object);
+            var instrumentProcessor = new InstrumentProcessor(instrument.Object, taskDispatcher.Object, new Mock<IConsole>().Object);
             instrument.Setup(i => i.Execute(It.IsAny<string>())).Throws(new Exception());
 
             ////Act
@@ -62,7 +62,7 @@
             ////Arrange
             var instrument = new Mock<IInstrument>();
             var taskDispatcher = new Mock<ITaskDispatcher>();
-            var instrumentProcessor = new InstrumentProcessor(instrument.Object, taskDispatcher.Object);
+            var instrumentProcessor = new InstrumentProcessor(instrument.Object, taskDispatcher.Object, new Mock<IConsole>().Object);
             var message = Guid.NewGuid().ToString();
             taskDispatcher.Setup(d => d.GetTask()).Returns(message);
             instrument.Setup(i => i.Execute(message)).Raises(i => i.Finished += null, EventArgs.Empty);
@@ -80,7 +80,7 @@
             ////Arrange
             var instrument = new Mock<IInstrument>();
             var taskDispatcher = new Mock<ITaskDispatcher>();
-            var instrumentProcessor = new InstrumentProcessor(instrument.Object, taskDispatcher.Object);
+            var instrumentProcessor = new InstrumentProcessor(instrument.Object, taskDispatcher.Object, new Mock<IConsole>().Object);
 
             ////Act
             var messages = new Queue<string>();
@@ -96,14 +96,29 @@
             for (int i2 = 0; i2 < 10; i2++)
             {
                 instrument.Raise(i => i.Finished += null, EventArgs.Empty);
-                taskDispatcher.Verify(t => t.FinishedTask(messages.Dequeue()), Times.Once());
+                ////TODO: Hm, doesn't work inline...
+                var message = messages.Dequeue();
+                taskDispatcher.Verify(t => t.FinishedTask(message), Times.Once());
             }
         }
 
         [TestMethod]
         public void when_the_instrument_fires_the_Error_event_then_the_InstrumentProcessor_writes_the_string_Error_occurred_to_the_console()
         {
-           Assert.Inconclusive(); 
+            ////Arrange
+            var instrument = new Mock<IInstrument>();
+            var taskDispatcher = new Mock<ITaskDispatcher>();
+            var console = new Mock<IConsole>();
+            var instrumentProcessor = new InstrumentProcessor(instrument.Object, taskDispatcher.Object, console.Object);
+            var message = Guid.NewGuid().ToString();
+            taskDispatcher.Setup(d => d.GetTask()).Returns(message);
+            instrument.Setup(i => i.Execute(message)).Raises(i => i.Error += null, EventArgs.Empty);
+
+            ////Act
+            instrumentProcessor.Process();
+
+            ////Assert
+            console.Verify(c => c.WriteLine(message));
         }
     }
 }
